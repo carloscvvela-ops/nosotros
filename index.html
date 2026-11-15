@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carlos & Grecia</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf6f1; --card:#ffffff; --ink:#2b1f22; --muted:#8a7a7d; --line:#eee3dc;
+    --rose:#c8506a; --rose-soft:#f8e3e8; --today:#2b1f22;
+    --c-aniv:#c8506a; --c-cumple:#e08a2c; --c-cita:#7a5bc7; --c-viaje:#2e8b8b; --c-familia:#5a8a3c; --c-otro:#6b7280; --c-curso:#b5838d;
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1b1517; --card:#251d20; --ink:#f4ebe7; --muted:#a8989b; --line:#3a2e32; --rose-soft:#3d2229; --today:#f4ebe7; }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:20px 16px 96px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+  h1{font-family:Fraunces,serif;font-weight:600;font-size:clamp(26px,6vw,36px);margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--rose)}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .btn{border:0;border-radius:999px;padding:11px 18px;font:600 14px "DM Sans",sans-serif;cursor:pointer;background:var(--rose);color:#fff;white-space:nowrap}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.danger{background:transparent;color:#c0392b;border:1px solid #e9b8b1}
+  .btn:disabled{opacity:.5;cursor:default}
+  .status{font-size:13px;color:var(--muted);margin:-6px 0 14px;min-height:18px}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:820px){.grid{grid-template-columns:1.5fr 1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+
+  .next{background:linear-gradient(135deg,var(--rose),#e07a8c);color:#fff;border:0}
+  .next .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;opacity:.85}
+  .next .t{font-family:Fraunces,serif;font-size:22px;margin:6px 0 2px}
+  .next .d{opacity:.9;font-size:14px}
+  .next .big{font-family:Fraunces,serif;font-size:40px;line-height:1;margin-top:10px}
+  .next .big small{font-size:15px;font-family:"DM Sans";opacity:.9}
+
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cal-head h2{font-family:Fraunces,serif;font-weight:500;font-size:20px;margin:0;text-transform:capitalize}
+  .nav{display:flex;gap:6px}
+  .nav button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:16px;cursor:pointer}
+  .nav button.txt{width:auto;padding:0 12px;border-radius:999px;font:500 13px "DM Sans"}
+  .dow,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .dow div{font-size:11px;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:.05em}
+  .day{min-height:64px;border-radius:10px;padding:5px;background:transparent;border:1px solid transparent;cursor:pointer;display:flex;flex-direction:column;gap:3px;text-align:left;color:inherit;font:inherit}
+  .day:hover{border-color:var(--line)}
+  .day.out{opacity:.35}
+  .day .n{font-size:13px;font-weight:500;width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
+  .day.today .n{background:var(--today);color:var(--bg)}
+  .day.sel{background:var(--rose-soft)}
+  .pill{font-size:10.5px;line-height:1.25;border-radius:5px;padding:2px 4px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .dots{display:none;gap:3px;flex-wrap:wrap}
+  .dot{width:7px;height:7px;border-radius:50%}
+  @media(max-width:560px){.day{min-height:48px}.pill{display:none}.dots{display:flex}}
+
+  .list h3{font-family:Fraunces,serif;font-weight:500;font-size:18px;margin:0 0 10px}
+  .item{display:flex;gap:12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line);cursor:pointer}
+  .item:first-of-type{border-top:0}
+  .badge{width:44px;flex:none;text-align:center;border-radius:10px;padding:6px 0;color:#fff}
+  .badge b{display:block;font-size:17px;line-height:1}
+  .badge span{font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+  .item .info{flex:1;min-width:0}
+  .item .ti{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .me{font-size:12.5px;color:var(--muted)}
+  .item .cd{font-size:12px;font-weight:600;color:var(--rose);white-space:nowrap}
+  .empty{color:var(--muted);font-size:14px;padding:8px 0}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+  .fab{position:fixed;right:18px;bottom:22px;box-shadow:0 8px 24px rgba(200,80,106,.35);padding:14px 20px;font-size:15px}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(20,10,14,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+  .modal-bg.on{display:flex}
+  @media(min-width:640px){.modal-bg{align-items:center}}
+  .modal{background:var(--card);width:100%;max-width:460px;border-radius:20px 20px 0 0;padding:20px 18px 26px;max-height:92vh;overflow:auto}
+  @media(min-width:640px){.modal{border-radius:20px}}
+  .modal h3{font-family:Fraunces,serif;font-weight:500;margin:0 0 14px;font-size:21px}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+  input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:15px "DM Sans",sans-serif}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cats{display:flex;flex-wrap:wrap;gap:6px}
+  .cats button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 11px;font:500 13px "DM Sans";cursor:pointer}
+  .cats button.on{color:#fff;border-color:transparent}
+  .check{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13.5px;color:var(--ink);font-weight:400}
+  .check input{width:auto;margin-top:2px}
+  .actions{display:flex;gap:8px;justify-content:space-between;margin-top:18px}
+  .actions .r{display:flex;gap:8px;margin-left:auto}
+  .day-detail{margin-top:14px}
+  .err{color:#c0392b;font-size:13px;margin-top:10px;min-height:16px}
+  .padd{display:flex;gap:8px}
+  .padd input{flex:1}
+  .ptask{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-top:1px solid var(--line)}
+  .ptask:first-child{border-top:0}
+  .pchk{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--rose);background:transparent;cursor:pointer;display:grid;place-items:center;color:#fff;font-size:12px;margin-top:1px;padding:0}
+  .ptask.done .pchk{background:var(--rose)}
+  .ptxt{flex:1;min-width:0;font-size:14.5px;line-height:1.4;word-wrap:break-word}
+  .ptask.done .ptxt{text-decoration:line-through;color:var(--muted)}
+  .pmeta{font-size:12px;color:var(--muted);margin-top:2px}
+  .pdel{flex:none;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1}
+  .who{font-size:13px;color:var(--muted);margin:-6px 0 12px;display:flex;align-items:center;gap:6px}
+  .who button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 12px;font:500 13px "DM Sans";cursor:pointer}
+  .who button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .linkbtn{border:0!important;background:transparent!important;color:var(--rose)!important;padding:0!important;font:500 13px "DM Sans"!important;cursor:pointer;text-decoration:underline}
+  .gate{position:fixed;inset:0;background:var(--bg);z-index:50;display:none;align-items:center;justify-content:center;padding:24px}
+  .gate.on{display:flex}
+  .gate-in{text-align:center;width:100%;max-width:320px}
+  .gate-heart{font-size:44px}
+  .gate h2{font-family:Fraunces,serif;font-weight:600;font-size:32px;margin:8px 0 4px}
+  .gate h2 span{color:var(--rose)}
+  .gate p{color:var(--muted);margin:0 0 24px;font-size:16px}
+  .gbtn{display:block;width:100%;padding:16px;font-size:17px;margin-bottom:12px}
+  .gbtn[data-who="grecia"]{background:var(--c-cita)}
+  .tabs{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 14px;padding:0 16px;scrollbar-width:none}
+  .tabs a{flex:none;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:500;background:var(--card)}
+  .tabs a.on{background:var(--rose);color:#fff;border-color:var(--rose)}
+  .tab{display:none}.tab.on{display:block}
+  .narrow{max-width:620px}
+  .stack label{margin-top:10px}
+  .stack .cats{margin-top:10px}
+  .reto{margin-bottom:12px}
+  .reto .top{display:flex;gap:10px;align-items:flex-start}
+  .reto .rt{flex:1;font-weight:600;font-size:15.5px;line-height:1.35}
+  .reto .rm{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .bar{height:10px;background:var(--rose-soft);border-radius:999px;overflow:hidden;margin:12px 0 10px}
+  .bar i{display:block;height:100%;background:var(--rose);border-radius:999px;transition:width .3s}
+  .rbtns{display:flex;gap:8px;align-items:center}
+  .rbtns .cnt{font-family:Fraunces,serif;font-size:20px;margin-right:auto}
+  .rbtns .btn{padding:8px 14px}
+  .chip{display:inline-block;font-size:11px;font-weight:600;color:#fff;border-radius:999px;padding:2px 8px;margin-right:6px;vertical-align:1px}
+  .verse h3{font-family:Fraunces,serif;font-weight:500;font-size:18px;margin:0 0 10px}
+  .vref{font-family:Fraunces,serif;font-size:24px;color:var(--rose);margin:4px 0}
+  .vtext{font-family:Fraunces,serif;font-size:17px;line-height:1.55;margin:8px 0;white-space:pre-wrap}
+  .vby{font-size:12.5px;color:var(--muted)}
+  .refl{border-top:1px solid var(--line);padding:10px 0;font-size:14.5px;line-height:1.45}
+  .refl b{font-size:12.5px;color:var(--rose);display:block;margin-bottom:2px}
+  .gcols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:480px){.gcols{grid-template-columns:1fr}}
+  .gcol{background:var(--bg);border-radius:12px;padding:12px}
+  .gcol h4{margin:0 0 8px;font-size:13px;color:var(--rose);text-transform:uppercase;letter-spacing:.05em}
+  .gitem{font-size:14.5px;line-height:1.45;padding:6px 0;border-top:1px solid var(--line);display:flex;gap:8px}
+  .gitem:first-of-type{border-top:0}
+  .gitem span{flex:1}
+  .gweek{margin-top:12px}
+  .gweek h5{margin:0 0 6px;font-size:13px;color:var(--muted)}
+  .ptoggle{border:0;background:transparent;color:var(--muted);font:500 13px "DM Sans";cursor:pointer;padding:10px 0 2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Carlos <span>&amp;</span> Grecia</h1>
+      <div class="sub">Nuestras fechas importantes, en un solo lugar</div>
+    </div>
+  </header>
+  <div class="who"><span id="hola"></span><button type="button" id="cambiar" class="linkbtn">Cambiar</button></div>
+  <nav class="tabs" id="tabs">
+    <a href="#calendario" data-tab="calendario">📅 Fechas</a>
+    <a href="#pendientes" data-tab="pendientes">💬 Pendientes</a>
+    <a href="#retos" data-tab="retos">🏃 Retos</a>
+    <a href="#semana" data-tab="semana">🙏 Semana</a>
+  </nav>
+  <div class="status" id="status">Cargando…</div>
+
+  <section class="tab" id="tab-calendario">
+  <div class="grid">
+    <div>
+      <div class="card next" id="nextCard" style="margin-bottom:18px;display:none"></div>
+      <div class="card">
+        <div class="cal-head">
+          <h2 id="monthTitle"></h2>
+          <div class="nav">
+            <button class="txt" id="todayBtn">Hoy</button>
+            <button id="prevBtn" aria-label="Mes anterior">‹</button>
+            <button id="nextBtn" aria-label="Mes siguiente">›</button>
+          </div>
+        </div>
+        <div class="dow"><div>Lu</div><div>Ma</div><div>Mi</div><div>Ju</div><div>Vi</div><div>Sá</div><div>Do</div></div>
+        <div class="days" id="days"></div>
+        <div class="legend" id="legend"></div>
+        <div class="day-detail list" id="dayDetail"></div>
+      </div>
+    </div>
+    <div class="card list">
+      <h3>Próximas fechas</h3>
+      <div id="upcoming"></div>
+    </div>
+  </div>
+  </section>
+
+  <section class="tab" id="tab-pendientes">
+    <div class="narrow">
+      <div class="card list" id="pendCard">
+        <h3>Temas pendientes por resolver</h3>
+        <div class="sub" style="margin:-4px 0 12px">Cosas que queremos conversar con calma, sin que se nos olviden.</div>
+        <form class="padd" id="pForm">
+          <input id="pText" maxlength="200" placeholder="Ej. Organizar el viaje a San Jacinto">
+          <button class="btn" id="pAddBtn" type="submit">Agregar</button>
+        </form>
+        <div class="err" id="pErr"></div>
+        <div id="pList"></div>
+        <button type="button" class="ptoggle" id="pToggle" style="display:none"></button>
+        <div id="pDone" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-retos">
+    <div class="narrow">
+      <div class="card list">
+        <h3>Retos en pareja</h3>
+        <div class="sub" style="margin:-4px 0 12px">Metas que cumplimos juntos: deporte, fe, lo que se nos ocurra.</div>
+        <form id="rForm" class="stack">
+          <input id="rTitle" maxlength="100" placeholder="Ej. Correr juntos 8 veces en diciembre" required>
+          <div class="cats" id="rCats"></div>
+          <div class="row">
+            <div><label for="rGoal">Meta (n.º de veces)</label><input id="rGoal" type="number" min="1" max="999" placeholder="Opcional"></div>
+            <div><label for="rDue">Fecha límite</label><input id="rDue" type="date"></div>
+          </div>
+          <button class="btn" id="rAddBtn" type="submit" style="margin-top:12px">Crear reto</button>
+        </form>
+        <div class="err" id="rErr"></div>
+      </div>
+      <div id="rList" style="margin-top:18px"></div>
+      <button type="button" class="ptoggle" id="rToggle" style="display:none"></button>
+      <div id="rDone" style="display:none"></div>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-semana">
+    <div class="narrow">
+      <div class="card verse" id="verseCard"></div>
+      <div class="card list" style="margin-top:18px">
+        <h3>Gratitud semanal</h3>
+        <div class="sub" id="gWeek" style="margin:-4px 0 12px"></div>
+        <div class="gcols" id="gCols"></div>
+        <form class="padd" id="gForm" style="margin-top:12px">
+          <input id="gText" maxlength="300" placeholder="Esta semana agradezco que…">
+          <button class="btn" id="gAddBtn" type="submit">Agregar</button>
+        </form>
+        <div class="err" id="gErr"></div>
+        <button type="button" class="ptoggle" id="gToggle" style="display:none"></button>
+        <div id="gPast" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<button class="btn fab" id="addBtn">+ Agregar fecha</button>
+
+<div class="gate" id="gate">
+  <div class="gate-in">
+    <div class="gate-heart">💗</div>
+    <h2>Carlos <span>&amp;</span> Grecia</h2>
+    <p>¿Quién eres?</p>
+    <button type="button" class="btn gbtn" data-who="carlos">Soy Carlos</button>
+    <button type="button" class="btn gbtn" data-who="grecia">Soy Grecia</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <form class="modal" id="form">
+    <h3 id="formTitle">Nueva fecha</h3>
+    <label for="fTitle">¿Qué es?</label>
+    <input id="fTitle" maxlength="80" placeholder="Ej. Cumpleaños de Grecia" required>
+    <label>Tipo</label>
+    <div class="cats" id="fCats"></div>
+    <div class="row">
+      <div>
+        <label for="fDate">Fecha</label>
+        <input id="fDate" type="date" required>
+      </div>
+      <div>
+        <label for="fTime">Hora (opcional)</label>
+        <input id="fTime" type="time">
+      </div>
+    </div>
+    <label for="fRec">Se repite</label>
+    <select id="fRec">
+      <option value="none">Solo una vez</option>
+      <option value="yearly">Cada año</option>
+      <option value="weekly">Cada semana</option>
+      <option value="monthly">Cada mes</option>
+    </select>
+    <div id="untilWrap" style="display:none">
+      <label for="fUntil">Hasta (opcional)</label>
+      <input id="fUntil" type="date">
+    </div>
+    <label class="check"><input type="checkbox" id="fCount"> Esta fecha es el inicio (mostrar cuántos años/meses se cumplen)</label>
+    <label for="fNote">Nota (opcional)</label>
+    <textarea id="fNote" maxlength="400" placeholder="Ideas, reservas, qué le gustaría…"></textarea>
+    <div class="err" id="fErr"></div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="delBtn" style="display:none">Eliminar</button>
+      <div class="r">
+        <button type="button" class="btn ghost" id="cancelBtn">Cancelar</button>
+        <button type="submit" class="btn" id="saveBtn">Guardar</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+const CATS = {
+  aniv:{label:"Aniversario", color:"var(--c-aniv)", emoji:"💗"},
+  cumple:{label:"Cumpleaños", color:"var(--c-cumple)", emoji:"🎂"},
+  cita:{label:"Tiempo juntos", color:"var(--c-cita)", emoji:"☕"},
+  viaje:{label:"Viaje", color:"var(--c-viaje)", emoji:"✈️"},
+  familia:{label:"Familia", color:"var(--c-familia)", emoji:"🏡"},
+  curso:{label:"Curso de novios", color:"var(--c-curso)", emoji:"💒"},
+  otro:{label:"Otro", color:"var(--c-otro)", emoji:"📌"}
+};
+const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const MON_S=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const $=id=>document.getElementById(id);
+
+let events=[]; // {id,title,cat,date,time,rec,count,note}
+let view=new Date(); view.setDate(1);
+let selected=null;
+let db=null, canWrite=true, editingId=null, formCat="aniv";
+
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const [y,m,d]=String(s).split("-").map(Number);return new Date(y,(m||1)-1,d||1)};
+const dim=(y,m)=>new Date(y,m+1,0).getDate();
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+
+function occurrences(ev,from,to){
+  const base=parse(ev.date); const out=[];
+  if(isNaN(base)) return out;
+  if(ev.until&&ev.rec!=="none"){const u=parse(ev.until); if(!isNaN(u)&&u<to) to=u}
+  if(ev.rec==="weekly"){
+    let d=new Date(base);
+    if(d<from){const k=Math.ceil((from-d)/(7*86400000)); d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+7*k)}
+    let n=Math.round((d-base)/(7*86400000));
+    while(d<=to){ if(d>=from) out.push({d,n}); n++; d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+7*n) }
+    return out;
+  }
+  if(ev.rec==="yearly"){
+    for(let y=from.getFullYear();y<=to.getFullYear();y++){
+      const d=new Date(y,base.getMonth(),Math.min(base.getDate(),dim(y,base.getMonth())));
+      if(d>=base&&d>=from&&d<=to) out.push({d,n:y-base.getFullYear()});
+    }
+  } else if(ev.rec==="monthly"){
+    let y=from.getFullYear(), m=from.getMonth();
+    while(new Date(y,m,1)<=to){
+      const d=new Date(y,m,Math.min(base.getDate(),dim(y,m)));
+      if(d>=base&&d>=from&&d<=to) out.push({d,n:(y-base.getFullYear())*12+(m-base.getMonth())});
+      m++; if(m>11){m=0;y++;}
+    }
+  } else if(base>=from&&base<=to) out.push({d:base,n:0});
+  return out;
+}
+function countLabel(ev,n){
+  if(!ev.count) return "";
+  if(ev.rec==="weekly") return ` · semana ${n+1}`;
+  if(n<1) return "";
+  if(ev.rec==="yearly") return ` · ${n} ${n===1?"año":"años"}`;
+  if(ev.rec==="monthly"){
+    if(n%12===0) return ` · ${n/12} ${n/12===1?"año":"años"}`;
+    return ` · ${n} ${n===1?"mes":"meses"}`;
+  }
+  return "";
+}
+function daysTo(d){return Math.round((d-today())/86400000)}
+function cdText(n){return n===0?"¡Hoy!":n===1?"Mañana":`En ${n} días`}
+
+function renderCalendar(){
+  const y=view.getFullYear(), m=view.getMonth();
+  $("monthTitle").textContent=`${MONTHS[m]} ${y}`;
+  const first=new Date(y,m,1); const offset=(first.getDay()+6)%7;
+  const start=new Date(y,m,1-offset); const end=new Date(start); end.setDate(start.getDate()+41);
+  const map={};
+  events.forEach(ev=>occurrences(ev,start,end).forEach(o=>{(map[ymd(o.d)]??=[]).push({ev,n:o.n})}));
+  const box=$("days"); box.innerHTML="";
+  const t=ymd(today());
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i); const k=ymd(d);
+    const b=document.createElement("button"); b.type="button";
+    b.className="day"+(d.getMonth()!==m?" out":"")+(k===t?" today":"")+(k===selected?" sel":"");
+    const n=document.createElement("div"); n.className="n"; n.textContent=d.getDate(); b.appendChild(n);
+    const dots=document.createElement("div"); dots.className="dots";
+    (map[k]||[]).forEach(({ev})=>{
+      const c=CATS[ev.cat]||CATS.otro;
+      const p=document.createElement("div"); p.className="pill"; p.style.background=c.color; p.textContent=ev.title; b.appendChild(p);
+      const dt=document.createElement("span"); dt.className="dot"; dt.style.background=c.color; dots.appendChild(dt);
+    });
+    b.appendChild(dots);
+    b.onclick=()=>{selected=k; renderCalendar(); renderDay(map[k]||[],d)};
+    box.appendChild(b);
+  }
+  if(selected){const sd=parse(selected); renderDay(map[selected]||[],sd)} else $("dayDetail").innerHTML="";
+}
+function itemEl(ev,d,n,showCd){
+  const c=CATS[ev.cat]||CATS.otro;
+  const it=document.createElement("div"); it.className="item";
+  const bd=document.createElement("div"); bd.className="badge"; bd.style.background=c.color;
+  const bb=document.createElement("b"); bb.textContent=d.getDate();
+  const bs=document.createElement("span"); bs.textContent=MON_S[d.getMonth()];
+  bd.append(bb,bs);
+  const info=document.createElement("div"); info.className="info";
+  const ti=document.createElement("div"); ti.className="ti"; ti.textContent=`${c.emoji} ${ev.title}`;
+  const me=document.createElement("div"); me.className="me";
+  const rec=(ev.rec==="yearly"?"Cada año":ev.rec==="monthly"?"Cada mes":ev.rec==="weekly"?"Cada semana":c.label)+(ev.until&&ev.rec!=="none"?` hasta el ${parse(ev.until).getDate()} ${MON_S[parse(ev.until).getMonth()]}`:"");
+  me.textContent=rec+(ev.time?` · ${ev.time}`:"")+countLabel(ev,n)+(ev.note?` · ${ev.note}`:"");
+  info.append(ti,me); it.append(bd,info);
+  if(showCd){const cd=document.createElement("div"); cd.className="cd"; cd.textContent=cdText(daysTo(d)); it.appendChild(cd)}
+  it.onclick=()=>openForm(ev);
+  return it;
+}
+function renderDay(list,d){
+  const box=$("dayDetail"); box.innerHTML="";
+  const h=document.createElement("h3"); h.style.marginTop="6px";
+  h.textContent=`${d.getDate()} de ${MONTHS[d.getMonth()]}`; box.appendChild(h);
+  if(!list.length){
+    const e=document.createElement("div"); e.className="empty"; e.textContent="Nada este día. ";
+    if(canWrite){const a=document.createElement("button"); a.className="btn ghost"; a.style.padding="6px 12px"; a.textContent="Agregar aquí"; a.onclick=()=>openForm(null,ymd(d)); e.appendChild(a)}
+    box.appendChild(e); return;
+  }
+  list.forEach(({ev,n})=>box.appendChild(itemEl(ev,d,n,false)));
+}
+function renderUpcoming(){
+  const from=today(); const to=new Date(from); to.setDate(to.getDate()+366);
+  const occ=[];
+  events.forEach(ev=>{const o=occurrences(ev,from,to); o.forEach(x=>occ.push({ev,...x}))});
+  occ.sort((a,b)=>a.d-b.d);
+  // show monthly events only for their next occurrence to avoid flooding
+  const seenMonthly=new Set(); const list=[];
+  for(const o of occ){ if(o.ev.rec==="monthly"||o.ev.rec==="weekly"){ if(seenMonthly.has(o.ev.id)) continue; seenMonthly.add(o.ev.id);} list.push(o); if(list.length>=10) break; }
+  const box=$("upcoming"); box.innerHTML="";
+  if(!list.length){const e=document.createElement("div"); e.className="empty"; e.textContent="Aún no hay fechas. Toca “Agregar fecha” para empezar."; box.appendChild(e)}
+  list.forEach(o=>box.appendChild(itemEl(o.ev,o.d,o.n,true)));
+  const nc=$("nextCard");
+  if(list.length){
+    const o=list[0], c=CATS[o.ev.cat]||CATS.otro, n=daysTo(o.d);
+    nc.style.display="block"; nc.innerHTML="";
+    const l=document.createElement("div"); l.className="lbl"; l.textContent="Lo próximo";
+    const t=document.createElement("div"); t.className="t"; t.textContent=`${c.emoji} ${o.ev.title}`;
+    const d=document.createElement("div"); d.className="d"; d.textContent=`${o.d.getDate()} de ${MONTHS[o.d.getMonth()]}`+(o.ev.time?` · ${o.ev.time}`:"")+countLabel(o.ev,o.n);
+    const big=document.createElement("div"); big.className="big";
+    if(n===0) big.textContent="¡Es hoy! 🎉"; else { big.textContent=n; const s=document.createElement("small"); s.textContent=n===1?" día":" días"; big.appendChild(s); }
+    nc.append(l,t,d,big);
+  } else nc.style.display="none";
+}
+function renderLegend(){
+  const l=$("legend"); l.innerHTML="";
+  Object.values(CATS).forEach(c=>{const s=document.createElement("span"); const i=document.createElement("i"); i.style.background=c.color; s.append(i,document.createTextNode(c.label)); l.appendChild(s)});
+}
+function renderAll(){renderCalendar(); renderUpcoming()}
+
+// form
+function renderCats(){
+  const box=$("fCats"); box.innerHTML="";
+  Object.entries(CATS).forEach(([k,c])=>{
+    const b=document.createElement("button"); b.type="button"; b.textContent=`${c.emoji} ${c.label}`;
+    if(k===formCat){b.className="on"; b.style.background=c.color}
+    b.onclick=()=>{formCat=k; renderCats()}; box.appendChild(b);
+  });
+}
+function openForm(ev,date){
+  editingId=ev?ev.id:null;
+  $("formTitle").textContent=ev?(canWrite?"Editar fecha":"Detalle"):"Nueva fecha";
+  $("fTitle").value=ev?.title||""; $("fDate").value=ev?.date||date||ymd(today());
+  $("fTime").value=ev?.time||""; $("fRec").value=ev?.rec||"none"; $("fUntil").value=ev?.until||""; syncUntil(); $("fCount").checked=!!ev?.count;
+  $("fNote").value=ev?.note||""; formCat=ev?.cat||"aniv"; renderCats();
+  $("delBtn").style.display=ev&&canWrite?"inline-block":"none"; $("delBtn").textContent="Eliminar"; $("delBtn").dataset.confirm="";
+  $("saveBtn").style.display=canWrite?"inline-block":"none";
+  [...document.querySelectorAll("#form input,#form select,#form textarea,#fCats button")].forEach(x=>x.disabled=!canWrite);
+  $("fErr").textContent=""; $("modalBg").classList.add("on");
+}
+function syncUntil(){ $("untilWrap").style.display=$("fRec").value==="none"?"none":"block" }
+$("fRec").addEventListener("change",syncUntil);
+function closeForm(){ $("modalBg").classList.remove("on") }
+$("cancelBtn").onclick=closeForm;
+$("modalBg").onclick=e=>{if(e.target.id==="modalBg") closeForm()};
+$("addBtn").onclick=()=>openForm(null,selected);
+$("prevBtn").onclick=()=>{view.setMonth(view.getMonth()-1); selected=null; renderCalendar()};
+$("nextBtn").onclick=()=>{view.setMonth(view.getMonth()+1); selected=null; renderCalendar()};
+$("todayBtn").onclick=()=>{view=new Date(); view.setDate(1); selected=ymd(today()); renderCalendar()};
+
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!db){$("fErr").textContent="No se puede guardar ahora: la base de datos no está disponible."; return}
+  const data={title:$("fTitle").value.trim().slice(0,80), cat:formCat, date:$("fDate").value, time:$("fTime").value||"",
+    rec:$("fRec").value, until:$("fRec").value==="none"?"":($("fUntil").value||""), count:$("fCount").checked, note:$("fNote").value.trim().slice(0,400), updatedAt:Date.now()};
+  if(!data.title||!data.date){$("fErr").textContent="Ponle un nombre y una fecha."; return}
+  if(data.until&&data.until<data.date){$("fErr").textContent="La fecha “Hasta” debe ser después de la fecha de inicio."; return}
+  $("saveBtn").disabled=true;
+  try{
+    const col=db.collection("events");
+    await (editingId?col.doc(editingId):col.doc()).set(data);
+    closeForm();
+  }catch(err){
+    if(err?.code==="invalid_argument"){canWrite=false; $("fErr").textContent="No tienes permiso para editar este calendario."}
+    else $("fErr").textContent="No se pudo guardar. Intenta de nuevo.";
+  }finally{$("saveBtn").disabled=false}
+});
+$("delBtn").onclick=async()=>{
+  const b=$("delBtn");
+  if(!b.dataset.confirm){b.dataset.confirm="1"; b.textContent="¿Seguro? Toca otra vez"; return}
+  try{ await db.collection("events").doc(editingId).delete(); closeForm() }
+  catch{ $("fErr").textContent="No se pudo eliminar." }
+};
+
+// ---- temas pendientes ----
+let pend=[], showDone=false;
+function fmtShort(ts){const d=new Date(ts); return isNaN(d)?"":`${d.getDate()} ${MON_S[d.getMonth()]}`}
+function pItem(p){
+  const row=document.createElement("div"); row.className="ptask"+(p.done?" done":"");
+  const chk=document.createElement("button"); chk.type="button"; chk.className="pchk"; chk.textContent=p.done?"✓":"";
+  chk.setAttribute("aria-label",p.done?"Marcar como pendiente":"Marcar como resuelto");
+  chk.disabled=!canWrite;
+  chk.onclick=async()=>{ if(!db) return; chk.disabled=true;
+    try{ await db.collection("pendientes").doc(p.id).update({done:!p.done, doneAt:!p.done?Date.now():0}) }
+    catch{ $("pErr").textContent="No se pudo actualizar." } finally{chk.disabled=!canWrite} };
+  const box=document.createElement("div"); box.className="ptxt";
+  const t=document.createElement("div"); t.textContent=p.text;
+  const m=document.createElement("div"); m.className="pmeta";
+  m.textContent=p.done&&p.doneAt?`Resuelto el ${fmtShort(p.doneAt)}`:(p.createdAt?`Anotado el ${fmtShort(p.createdAt)}`:"");
+  box.append(t,m); row.append(chk,box);
+  if(canWrite){
+    const del=document.createElement("button"); del.type="button"; del.className="pdel"; del.textContent="×"; del.setAttribute("aria-label","Eliminar");
+    del.onclick=async()=>{ if(!del.dataset.c){del.dataset.c="1"; del.textContent="¿Borrar?"; del.style.fontSize="12px"; setTimeout(()=>{del.dataset.c="";del.textContent="×";del.style.fontSize=""},3000); return}
+      try{ await db.collection("pendientes").doc(p.id).delete() }catch{ $("pErr").textContent="No se pudo eliminar." } };
+    row.appendChild(del);
+  }
+  return row;
+}
+function renderPend(){
+  const open=pend.filter(p=>!p.done).sort((a,b)=>a.createdAt-b.createdAt);
+  const done=pend.filter(p=>p.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  const l=$("pList"); l.innerHTML="";
+  if(!open.length){const e=document.createElement("div"); e.className="empty"; e.textContent=done.length?"Todo resuelto por ahora 💛":"No hay temas pendientes."; l.appendChild(e)}
+  open.forEach(p=>l.appendChild(pItem(p)));
+  const tg=$("pToggle"), dl=$("pDone");
+  tg.style.display=done.length?"block":"none";
+  tg.textContent=(showDone?"▾ ":"▸ ")+`Resueltos (${done.length})`;
+  dl.style.display=showDone&&done.length?"block":"none"; dl.innerHTML="";
+  if(showDone) done.forEach(p=>dl.appendChild(pItem(p)));
+}
+$("pToggle").onclick=()=>{showDone=!showDone; renderPend()};
+$("pForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const text=$("pText").value.trim().slice(0,200); if(!text) return;
+  if(!db){$("pErr").textContent="No se puede guardar ahora."; return}
+  $("pAddBtn").disabled=true; $("pErr").textContent="";
+  try{ await db.collection("pendientes").doc().set({text,done:false,createdAt:Date.now(),doneAt:0}); $("pText").value="" }
+  catch(err){ $("pErr").textContent=err?.code==="invalid_argument"?"No tienes permiso para editar.":"No se pudo guardar." }
+  finally{ $("pAddBtn").disabled=false }
+});
+
+// ---- quién soy ----
+const NAMES={carlos:"Carlos",grecia:"Grecia"};
+let me=null; try{me=localStorage.getItem("quien")}catch{}
+if(!NAMES[me]) me=null;
+function renderWho(){ $("hola").textContent=me?`Hola, ${NAMES[me]} 👋 `:""; $("cambiar").style.display=me?"":"none" }
+function openGate(){ $("gate").classList.add("on") }
+document.querySelectorAll(".gbtn").forEach(b=>b.onclick=()=>{me=b.dataset.who; try{localStorage.setItem("quien",me)}catch{}; $("gate").classList.remove("on"); renderWho(); renderWeek()});
+$("cambiar").onclick=openGate;
+function needMe(errId){ if(!me){$(errId).textContent="Primero elige arriba quién eres (Carlos o Grecia)."; return false} return true }
+const nameOf=k=>NAMES[k]||"Alguien";
+
+// ---- pestañas ----
+const TABS=["calendario","pendientes","retos","semana"];
+function showTab(){
+  const h=location.hash.slice(1); const t=TABS.includes(h)?h:"calendario";
+  TABS.forEach(x=>{$("tab-"+x).classList.toggle("on",x===t)});
+  document.querySelectorAll(".tabs a").forEach(a=>a.classList.toggle("on",a.dataset.tab===t));
+  $("addBtn").style.display=(t==="calendario"&&canWrite&&db)?"":"none";
+}
+window.addEventListener("hashchange",showTab);
+
+// ---- semana helpers ----
+function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x}
+function weekKey(d){return ymd(weekStart(d))}
+function weekLabel(key){const s=parse(key); const e=new Date(s); e.setDate(s.getDate()+6);
+  return s.getMonth()===e.getMonth()?`Semana del ${s.getDate()} al ${e.getDate()} de ${MONTHS[e.getMonth()]}`:`Semana del ${s.getDate()} de ${MONTHS[s.getMonth()]} al ${e.getDate()} de ${MONTHS[e.getMonth()]}`}
+
+// ---- retos ----
+const RCATS={deporte:{label:"Deporte",emoji:"🏃",color:"var(--c-viaje)"},fe:{label:"Fe",emoji:"🙏",color:"var(--c-cita)"},pareja:{label:"Pareja",emoji:"💗",color:"var(--c-aniv)"},curso:{label:"Curso de novios",emoji:"💒",color:"var(--c-curso)"},otro:{label:"Otro",emoji:"⭐",color:"var(--c-cumple)"}};
+let retos=[], rCat="deporte", showRDone=false;
+function renderRCats(){const b=$("rCats"); b.innerHTML=""; Object.entries(RCATS).forEach(([k,c])=>{const x=document.createElement("button"); x.type="button"; x.textContent=`${c.emoji} ${c.label}`; if(k===rCat){x.className="on"; x.style.background=c.color} x.onclick=()=>{rCat=k; renderRCats()}; b.appendChild(x)})}
+async function rUpdate(id,data,btn){ if(!db) return; if(btn) btn.disabled=true;
+  try{ await db.collection("retos").doc(id).update(data) }catch{ $("rErr").textContent="No se pudo actualizar." } finally{ if(btn) btn.disabled=false } }
+function retoEl(r){
+  const c=RCATS[r.cat]||RCATS.otro;
+  const card=document.createElement("div"); card.className="card reto";
+  const top=document.createElement("div"); top.className="top";
+  const info=document.createElement("div"); info.style.flex="1";
+  const t=document.createElement("div"); t.className="rt";
+  const chip=document.createElement("span"); chip.className="chip"; chip.style.background=c.color; chip.textContent=`${c.emoji} ${c.label}`;
+  t.append(chip,document.createTextNode(r.title));
+  const m=document.createElement("div"); m.className="rm";
+  const bits=[];
+  if(r.due){const n=daysTo(parse(r.due)); bits.push(r.done?`Meta: ${parse(r.due).getDate()} ${MON_S[parse(r.due).getMonth()]}`:n<0?`Venció hace ${-n} ${-n===1?"día":"días"}`:n===0?"Vence hoy":`Quedan ${n} ${n===1?"día":"días"}`)}
+  if(r.done&&r.doneAt) bits.push(`¡Cumplido el ${fmtShort(r.doneAt)}! 🎉`);
+  m.textContent=bits.join(" · ");
+  info.append(t,m); top.appendChild(info);
+  if(canWrite){const del=document.createElement("button"); del.type="button"; del.className="pdel"; del.textContent="×"; del.setAttribute("aria-label","Eliminar reto");
+    del.onclick=async()=>{ if(!del.dataset.c){del.dataset.c="1"; del.textContent="¿Borrar?"; del.style.fontSize="12px"; setTimeout(()=>{del.dataset.c="";del.textContent="×";del.style.fontSize=""},3000); return}
+      try{ await db.collection("retos").doc(r.id).delete() }catch{ $("rErr").textContent="No se pudo eliminar." } };
+    top.appendChild(del)}
+  card.appendChild(top);
+  if(r.goal>0){const bar=document.createElement("div"); bar.className="bar"; const i=document.createElement("i"); i.style.width=Math.min(100,Math.round(r.progress/r.goal*100))+"%"; bar.appendChild(i); card.appendChild(bar)}
+  const btns=document.createElement("div"); btns.className="rbtns"; if(!(r.goal>0)) btns.style.marginTop="12px";
+  const cnt=document.createElement("div"); cnt.className="cnt"; cnt.textContent=r.goal>0?`${r.progress} / ${r.goal}`:(r.progress?`${r.progress} ${r.progress===1?"vez":"veces"}`:"");
+  btns.appendChild(cnt);
+  if(canWrite&&!r.done){
+    if(r.progress>0){const minus=document.createElement("button"); minus.type="button"; minus.className="btn ghost"; minus.textContent="−1"; minus.onclick=()=>rUpdate(r.id,{progress:Math.max(0,r.progress-1)},minus); btns.appendChild(minus)}
+    const plus=document.createElement("button"); plus.type="button"; plus.className="btn"; plus.textContent="+1 ¡Lo hicimos!";
+    plus.onclick=()=>{const p=r.progress+1; const fin=r.goal>0&&p>=r.goal; rUpdate(r.id,fin?{progress:p,done:true,doneAt:Date.now()}:{progress:p},plus)};
+    btns.appendChild(plus);
+    if(!(r.goal>0)){const ok=document.createElement("button"); ok.type="button"; ok.className="btn ghost"; ok.textContent="✓ Cumplido"; ok.onclick=()=>rUpdate(r.id,{done:true,doneAt:Date.now()},ok); btns.appendChild(ok)}
+  } else if(canWrite&&r.done){const re=document.createElement("button"); re.type="button"; re.className="btn ghost"; re.textContent="Reabrir"; re.onclick=()=>rUpdate(r.id,{done:false,doneAt:0},re); btns.appendChild(re)}
+  card.appendChild(btns);
+  return card;
+}
+function renderRetos(){
+  const open=retos.filter(r=>!r.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999")||a.createdAt-b.createdAt);
+  const done=retos.filter(r=>r.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  const l=$("rList"); l.innerHTML="";
+  if(!open.length){const e=document.createElement("div"); e.className="empty"; e.textContent=done.length?"No hay retos activos. ¡Creen el siguiente! 💪":"Aún no hay retos. Creen el primero arriba."; l.appendChild(e)}
+  open.forEach(r=>l.appendChild(retoEl(r)));
+  const tg=$("rToggle"), dl=$("rDone");
+  tg.style.display=done.length?"block":"none"; tg.textContent=(showRDone?"▾ ":"▸ ")+`Retos cumplidos (${done.length})`;
+  dl.style.display=showRDone&&done.length?"block":"none"; dl.innerHTML=""; if(showRDone) done.forEach(r=>dl.appendChild(retoEl(r)));
+}
+$("rToggle").onclick=()=>{showRDone=!showRDone; renderRetos()};
+$("rForm").addEventListener("submit",async e=>{
+  e.preventDefault(); if(!db){$("rErr").textContent="No se puede guardar ahora."; return}
+  const title=$("rTitle").value.trim().slice(0,100); if(!title) return;
+  const goal=Math.max(0,Math.min(999,parseInt($("rGoal").value)||0));
+  $("rAddBtn").disabled=true; $("rErr").textContent="";
+  try{ await db.collection("retos").doc().set({title,cat:rCat,goal,progress:0,due:$("rDue").value||"",done:false,doneAt:0,createdAt:Date.now()});
+    $("rTitle").value=""; $("rGoal").value=""; $("rDue").value="" }
+  catch(err){ $("rErr").textContent=err?.code==="invalid_argument"?"No tienes permiso para editar.":"No se pudo guardar." }
+  finally{ $("rAddBtn").disabled=false }
+});
+
+// ---- versículo + gratitud ----
+let verses=[], refls=[], grats=[], showGPast=false, editingVerse=false;
+let versePending=false;
+$("verseCard").addEventListener("focusout",()=>setTimeout(()=>{ if(versePending&&!$("verseCard").contains(document.activeElement)){versePending=false; renderVerse()} },0));
+function renderVerse(force){
+  const box=$("verseCard");
+  const a=document.activeElement;
+  if(!force&&a&&box.contains(a)&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")&&a.value){versePending=true; return}
+  box.innerHTML="";
+  const wk=weekKey(new Date());
+  const cur=verses.filter(v=>v.week===wk).sort((a,b)=>b.createdAt-a.createdAt)[0];
+  const h=document.createElement("h3"); h.textContent="📖 Versículo de la semana"; box.appendChild(h);
+  if(!cur||editingVerse){
+    if(!canWrite){const e=document.createElement("div"); e.className="empty"; e.textContent="Todavía no han elegido el versículo de esta semana."; box.appendChild(e); return}
+    const f=document.createElement("form"); f.className="stack";
+    const s=document.createElement("div"); s.className="sub"; s.style.margin="-4px 0 4px"; s.textContent=cur?"Cambiar el versículo de esta semana":"Todavía no hay versículo esta semana. ¿Quién lo elige?";
+    const r=document.createElement("input"); r.maxLength=60; r.placeholder="Cita, ej. 1 Corintios 13:4-7"; r.required=true; if(cur) r.value=cur.ref;
+    const t=document.createElement("textarea"); t.maxLength=800; t.placeholder="Escribe el versículo (opcional)"; t.style.marginTop="8px"; if(cur) t.value=cur.text;
+    const er=document.createElement("div"); er.className="err"; er.id="vErr";
+    const act=document.createElement("div"); act.className="actions";
+    const sv=document.createElement("button"); sv.type="submit"; sv.className="btn"; sv.textContent="Guardar versículo";
+    const r2=document.createElement("div"); r2.className="r";
+    if(cur){const cc=document.createElement("button"); cc.type="button"; cc.className="btn ghost"; cc.textContent="Cancelar"; cc.onclick=()=>{editingVerse=false; renderVerse(true)}; r2.appendChild(cc)}
+    r2.appendChild(sv); act.appendChild(r2);
+    f.append(s,r,t,er,act); box.appendChild(f);
+    f.addEventListener("submit",async e=>{e.preventDefault(); if(!needMe("vErr")||!db) return; sv.disabled=true;
+      const data={ref:r.value.trim().slice(0,60),text:t.value.trim().slice(0,800),by:me,week:wk,createdAt:cur?cur.createdAt:Date.now()};
+      try{ await db.collection("versiculos").doc(cur?cur.id:"w-"+wk).set(data); editingVerse=false; renderVerse(true) }
+      catch(err){ er.textContent=err?.code==="invalid_argument"?"No tienes permiso para editar.":"No se pudo guardar." } finally{sv.disabled=false}});
+  } else {
+    const ref=document.createElement("div"); ref.className="vref"; ref.textContent=cur.ref; box.appendChild(ref);
+    if(cur.text){const tx=document.createElement("div"); tx.className="vtext"; tx.textContent=cur.text; box.appendChild(tx)}
+    const by=document.createElement("div"); by.className="vby"; by.textContent=`Lo eligió ${nameOf(cur.by)} · ${weekLabel(wk)}`;
+    if(canWrite){const ed=document.createElement("button"); ed.type="button"; ed.className="ptoggle"; ed.style.padding="0 0 0 8px"; ed.textContent="Cambiar"; ed.onclick=()=>{editingVerse=true; renderVerse(true)}; by.appendChild(ed)}
+    box.appendChild(by);
+    const rh=document.createElement("div"); rh.style.cssText="font-weight:600;font-size:13px;margin:16px 0 4px;color:var(--muted)"; rh.textContent="Lo que nos dice"; box.appendChild(rh);
+    const mine=refls.filter(x=>x.verse===cur.id).sort((a,b)=>a.createdAt-b.createdAt);
+    if(!mine.length){const e=document.createElement("div"); e.className="empty"; e.textContent="Todavía no hay reflexiones."; box.appendChild(e)}
+    mine.forEach(x=>{const d=document.createElement("div"); d.className="refl"; const b=document.createElement("b"); b.textContent=nameOf(x.by); d.append(b,document.createTextNode(x.text)); box.appendChild(d)});
+    if(canWrite){
+      const f=document.createElement("form"); f.className="padd"; f.style.marginTop="8px";
+      const i=document.createElement("input"); i.maxLength=500; i.placeholder="¿Qué te dice este versículo?";
+      const b=document.createElement("button"); b.className="btn"; b.type="submit"; b.textContent="Enviar";
+      const er=document.createElement("div"); er.className="err"; er.id="vErr";
+      f.append(i,b); box.append(f,er);
+      f.addEventListener("submit",async e=>{e.preventDefault(); const text=i.value.trim().slice(0,500); if(!text||!needMe("vErr")||!db) return; b.disabled=true;
+        try{ await db.collection("reflexiones").doc().set({verse:cur.id,by:me,text,createdAt:Date.now()}); i.value=""; renderVerse(true) }
+        catch{ er.textContent="No se pudo guardar." } finally{b.disabled=false}});
+    }
+  }
+  const past=verses.filter(v=>v.week!==wk).sort((a,b)=>b.week.localeCompare(a.week));
+  if(past.length){
+    const det=document.createElement("details"); det.style.marginTop="14px";
+    const sm=document.createElement("summary"); sm.style.cssText="cursor:pointer;font-size:13px;color:var(--muted)"; sm.textContent=`Versículos anteriores (${past.length})`; det.appendChild(sm);
+    past.forEach(v=>{const d=document.createElement("div"); d.className="refl"; const b=document.createElement("b"); b.textContent=weekLabel(v.week); d.append(b,document.createTextNode(v.ref+(v.text?` — ${v.text}`:""))); det.appendChild(d)});
+    box.appendChild(det);
+  }
+}
+function gItem(g){
+  const d=document.createElement("div"); d.className="gitem"; const s=document.createElement("span"); s.textContent=g.text; d.appendChild(s);
+  if(canWrite&&g.by===me){const del=document.createElement("button"); del.type="button"; del.className="pdel"; del.textContent="×"; del.setAttribute("aria-label","Eliminar");
+    del.onclick=async()=>{ if(!del.dataset.c){del.dataset.c="1"; del.textContent="¿Borrar?"; del.style.fontSize="12px"; setTimeout(()=>{del.dataset.c="";del.textContent="×";del.style.fontSize=""},3000); return}
+      try{ await db.collection("gratitud").doc(g.id).delete() }catch{ $("gErr").textContent="No se pudo eliminar." } };
+    d.appendChild(del)}
+  return d;
+}
+function renderGrat(){
+  const wk=weekKey(new Date()); $("gWeek").textContent=weekLabel(wk);
+  const cols=$("gCols"); cols.innerHTML="";
+  ["carlos","grecia"].forEach(k=>{
+    const c=document.createElement("div"); c.className="gcol"; const h=document.createElement("h4"); h.textContent=`${NAMES[k]} agradece`; c.appendChild(h);
+    const list=grats.filter(g=>g.week===wk&&g.by===k).sort((a,b)=>a.createdAt-b.createdAt);
+    if(!list.length){const e=document.createElement("div"); e.className="empty"; e.style.padding="0"; e.textContent="Aún nada esta semana."; c.appendChild(e)}
+    list.forEach(g=>c.appendChild(gItem(g)));
+    cols.appendChild(c);
+  });
+  $("gText").placeholder=me?`${NAMES[me]}, esta semana agradezco que…`:"Esta semana agradezco que…";
+  const weeks=[...new Set(grats.filter(g=>g.week!==wk).map(g=>g.week))].sort().reverse();
+  const tg=$("gToggle"), pp=$("gPast"); tg.style.display=weeks.length?"block":"none";
+  tg.textContent=(showGPast?"▾ ":"▸ ")+`Semanas anteriores (${weeks.length})`;
+  pp.style.display=showGPast&&weeks.length?"block":"none"; pp.innerHTML="";
+  if(showGPast) weeks.forEach(w=>{const sec=document.createElement("div"); sec.className="gweek"; const h=document.createElement("h5"); h.textContent=weekLabel(w); sec.appendChild(h);
+    grats.filter(g=>g.week===w).sort((a,b)=>a.createdAt-b.createdAt).forEach(g=>{const d=document.createElement("div"); d.className="gitem"; const s=document.createElement("span"); s.textContent=`${nameOf(g.by)}: ${g.text}`; d.appendChild(s); sec.appendChild(d)});
+    pp.appendChild(sec)});
+}
+function renderWeek(){renderVerse(true); renderGrat()}
+$("gToggle").onclick=()=>{showGPast=!showGPast; renderGrat()};
+$("gForm").addEventListener("submit",async e=>{
+  e.preventDefault(); const text=$("gText").value.trim().slice(0,300); if(!text||!needMe("gErr")) return;
+  if(!db){$("gErr").textContent="No se puede guardar ahora."; return}
+  $("gAddBtn").disabled=true; $("gErr").textContent="";
+  try{ await db.collection("gratitud").doc().set({text,by:me,week:weekKey(new Date()),createdAt:Date.now()}); $("gText").value="" }
+  catch(err){ $("gErr").textContent=err?.code==="invalid_argument"?"No tienes permiso para editar.":"No se pudo guardar." }
+  finally{ $("gAddBtn").disabled=false }
+});
+
+renderWho(); renderRCats(); showTab();
+renderLegend(); renderAll(); renderPend(); renderRetos(); renderWeek();
+
+// ====== CONFIGURACIÓN DE FIREBASE (pegar aquí) ======
+const FIREBASE_CONFIG = /*CONFIG*/{"apiKey": "AIzaSyCcL7Tnx6ELlkLl8U1s9iRPsA_oGI68G3M", "authDomain": "carlos-grecia-e80d3.firebaseapp.com", "projectId": "carlos-grecia-e80d3", "storageBucket": "carlos-grecia-e80d3.firebasestorage.app", "messagingSenderId": "723254191736", "appId": "1:723254191736:web:79f57134edfa2a7334af8d"}/*/CONFIG*/;
+const SEED = {"events": {"mes-28": {"cat": "aniv", "count": false, "date": "2026-10-28", "note": "Saludarla a medianoche", "rec": "monthly", "time": "00:00", "title": "Nuestro mes", "until": ""}, "teatro-cdv": {"cat": "otro", "count": false, "date": "2026-12-02", "note": "", "rec": "none", "time": "19:00", "title": "Teatro CDV", "until": ""}, "antes-del-si": {"cat": "curso", "count": false, "date": "2026-11-17", "note": "", "rec": "weekly", "time": "20:30", "title": "Antes del SI", "until": "2026-12-12"}}, "pendientes": {"p1": {"createdAt": 1794710637800, "done": false, "doneAt": 0, "text": "Conversación sobre algo"}}};
+(async()=>{
+  const st=$("status");
+  const KEY=new URLSearchParams(location.search).get("k")||"";
+  const lock=msg=>{ st.textContent=msg; document.querySelectorAll(".tabs,.tab,#addBtn,.who").forEach(x=>x.style.display="none") };
+  if(KEY.length<24||!/^[A-Za-z0-9_-]+$/.test(KEY)){ lock("Este link está incompleto 🔒 Pide el link completo para entrar."); return }
+  if(!FIREBASE_CONFIG||!window.firebase){ lock("La página todavía no está conectada a su base de datos."); return }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const root=firebase.firestore().collection("parejas").doc(KEY);
+    db={collection:n=>root.collection(n)};
+    // primera vez: cargar las fechas que ya existían
+    const meta=root.collection("meta").doc("seed");
+    const m=await meta.get();
+    if(!m.exists){
+      for(const [c,docs] of Object.entries(SEED)) for(const [id,d] of Object.entries(docs)) await root.collection(c).doc(id).set({...d,updatedAt:Date.now()});
+      await meta.set({at:Date.now()});
+    }
+  }catch(e){ console.error(e); lock("No se pudo conectar con la base de datos. Revisa tu internet e intenta de nuevo."); return }
+  if(!me) openGate();
+  let timer=setTimeout(()=>{st.textContent="Las fechas tardan en cargar; puede que no estén al día."},10000);
+  db.collection("events").onSnapshot(snap=>{
+    events=snap.docs.map(d=>{const x=d.data()||{}; return {id:d.id,title:String(x.title||""),cat:String(x.cat||"otro"),date:String(x.date||""),time:String(x.time||""),rec:String(x.rec||"none"),until:String(x.until||""),count:!!x.count,note:String(x.note||"")}});
+    if(!snap.metadata.fromCache){clearTimeout(timer); st.textContent=""}
+    renderAll();
+  },err=>{clearTimeout(timer); st.textContent= err.code==="revoked"?"":"No se pudieron cargar las fechas."});
+  if(!canWrite) $("pForm").style.display="none";
+  db.collection("pendientes").onSnapshot(snap=>{
+    pend=snap.docs.map(d=>{const x=d.data()||{}; return {id:d.id,text:String(x.text||""),done:!!x.done,createdAt:Number(x.createdAt)||0,doneAt:Number(x.doneAt)||0}});
+    renderPend();
+  },()=>{ $("pErr").textContent="No se pudieron cargar los pendientes." });
+  if(!canWrite){ $("rForm").style.display="none"; $("gForm").style.display="none" }
+  db.collection("retos").onSnapshot(snap=>{
+    retos=snap.docs.map(d=>{const x=d.data()||{}; return {id:d.id,title:String(x.title||""),cat:String(x.cat||"otro"),goal:Number(x.goal)||0,progress:Number(x.progress)||0,due:String(x.due||""),done:!!x.done,doneAt:Number(x.doneAt)||0,createdAt:Number(x.createdAt)||0}});
+    renderRetos();
+  },()=>{ $("rErr").textContent="No se pudieron cargar los retos." });
+  db.collection("versiculos").onSnapshot(snap=>{
+    verses=snap.docs.map(d=>{const x=d.data()||{}; return {id:d.id,ref:String(x.ref||""),text:String(x.text||""),by:String(x.by||""),week:String(x.week||""),createdAt:Number(x.createdAt)||0}});
+    renderVerse();
+  },()=>{});
+  db.collection("reflexiones").onSnapshot(snap=>{
+    refls=snap.docs.map(d=>{const x=d.data()||{}; return {id:d.id,verse:String(x.verse||""),by:String(x.by||""),text:String(x.text||""),createdAt:Number(x.createdAt)||0}});
+    renderVerse();
+  },()=>{});
+  db.collection("gratitud").onSnapshot(snap=>{
+    grats=snap.docs.map(d=>{const x=d.data()||{}; return {id:d.id,text:String(x.text||""),by:String(x.by||""),week:String(x.week||""),createdAt:Number(x.createdAt)||0}});
+    renderGrat();
+  },()=>{ $("gErr").textContent="No se pudo cargar la gratitud." });
+  showTab();
+})();
+</script>
+</body>
+</html>
